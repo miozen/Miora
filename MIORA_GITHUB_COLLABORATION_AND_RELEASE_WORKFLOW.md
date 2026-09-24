@@ -33,6 +33,12 @@ ssh://git@ssh.github.com:443/miozen/Miora.git
 - 前端依赖 Node.js 20；当前开发机使用 NVM 管理的 `v20.20.2`。在非交互 shell 或 CI 以外的命令环境中，先执行 `source "$HOME/.nvm/nvm.sh"`，再运行 `node`、`npm` 或前端验证命令。
 - CI 使用独立的 Node 20 runner，不依赖开发机的 NVM 安装；Node/NPM 二进制路径、NVM 目录及任何本机凭据均不得提交。
 
+## 环境样例与密钥
+
+- 测试与预发布只提交非敏感样例：`environments/test.env.example`、`environments/staging.env.example`；复制出的运行时 `environments/*.env` 必须保持 Git 忽略并限制文件权限。
+- `MYSQL_PASSWORD`、`MYSQL_ROOT_PASSWORD`、`JWT_SECRET_KEY` 以及启用 S3 时的两项访问密钥必须只保存在 GitHub Environment Secrets（`test`、`staging`）或受保护的部署运行时；它们不得进入仓库、日志、Artifact、前端构建变量或 GitHub Variables。
+- CI 可使用仅存在于 runner 的无价值验证占位值检查 Compose 模板，但不获取、打印或持久化真实 Secrets。部署工作流必须声明对应 GitHub Environment，并通过 `${{ secrets.NAME }}` 注入密钥；具体名称和操作边界见 `MIORA_ENVIRONMENT_AND_SECRETS.md`。
+
 ## 协作回合契约
 
 1. 项目所有者负责提出目标、优先级和必要的产品/运维决策；Codex 负责拆分为清单中的单个可验收子任务，并在该范围内完成实现和测试。
@@ -96,3 +102,4 @@ feature/<topic> -- PR --> dev -- PR --> main -- 手动发布 --> vX.Y.Z
 | 2026-09-24 | 项目所有者确认 GitHub 使用 SSH 443 端口 | 新增 SSH-over-443 远端、主机指纹验证和密钥保护规范。                                                                              |
 | 2026-09-24 | 开发机使用 NVM 提供 Node 20             | 新增前端 Node 前置条件及非交互 shell 的 NVM 初始化方式；CI 保持独立、可复现。                                                     |
 | 2026-09-24 | B.3 发布前门禁                          | `main` 上的手动 Release tag 工作流复跑质量门禁；默认 dry run，只有项目所有者显式关闭后才创建 SemVer 注释标签。GHCR 发布留待 C.3。 |
+| 2026-09-24 | B.4 测试/预发布环境样例与密钥边界       | 新增 test、staging 非敏感环境样例及 GitHub Environment Secrets 映射；CI 只使用 runner 内验证占位值。                              |
