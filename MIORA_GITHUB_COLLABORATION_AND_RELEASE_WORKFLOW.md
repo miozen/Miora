@@ -39,6 +39,12 @@ ssh://git@ssh.github.com:443/miozen/Miora.git
 - `MYSQL_PASSWORD`、`MYSQL_ROOT_PASSWORD`、`JWT_SECRET_KEY` 以及启用 S3 时的两项访问密钥必须只保存在 GitHub Environment Secrets（`test`、`staging`）或受保护的部署运行时；它们不得进入仓库、日志、Artifact、前端构建变量或 GitHub Variables。
 - CI 可使用仅存在于 runner 的无价值验证占位值检查 Compose 模板，但不获取、打印或持久化真实 Secrets。部署工作流必须声明对应 GitHub Environment，并通过 `${{ secrets.NAME }}` 注入密钥；具体名称和操作边界见 `MIORA_ENVIRONMENT_AND_SECRETS.md`。
 
+## GHCR 镜像命名
+
+- GHCR 命名空间固定为 `ghcr.io/miozen`；Server、Blog、Admin、Proxy 分别使用 `miora-server`、`miora-blog`、`miora-admin`、`miora-proxy`。完整映射与版本语义以 `MIORA_GHCR_IMAGE_CONVENTION.md` 为准。
+- 生产镜像必须使用与 Git 发布标签对应的 `vX.Y.Z` 标签，不得使用 `latest` 或不固定的分支标签。C.2/C.3/C.4 分别实现生产 Compose、构建推送和包访问控制。
+- `compose.production.yaml` 只允许使用版本镜像、命名卷和运行时环境变量；禁止 `build`、源码目录与本地 Nginx 配置挂载。数据库初始化必须走经审查的迁移流程，不从部署源码树挂载 SQL。
+
 ## 协作回合契约
 
 1. 项目所有者负责提出目标、优先级和必要的产品/运维决策；Codex 负责拆分为清单中的单个可验收子任务，并在该范围内完成实现和测试。
@@ -81,7 +87,8 @@ feature/<topic> -- PR --> dev -- PR --> main -- 手动发布 --> vX.Y.Z
 | 合并到 `main`                                  | 是                   | 否              | 生产候选，等待项目所有者选择版本 |
 | 从 `main` 手动触发 Release tag（默认 dry run） | 是，复跑四项质量门禁 | 否              | 校验版本号与发布前验证           |
 | 从 `main` 手动触发 Release tag（关闭 dry run） | 是，复跑四项质量门禁 | 否              | 创建不可变 `vX.Y.Z` 注释标签     |
-| 推送 `vX.Y.Z` 标签                             | 由后续 C.3 接入      | 由后续 C.3 接入 | 正式镜像发布与可回滚部署         |
+| 推送 `vX.Y.Z` 标签                             | 是，复跑四项质量门禁 | 是              | 发布四个 `linux/amd64` GHCR 镜像 |
+| 从 `main` 手动触发 Publish GHCR images         | 是，复跑四项质量门禁 | 否              | 构建四个镜像的无副作用 dry run   |
 
 ## 首次推送的人工确认点
 
@@ -103,3 +110,5 @@ feature/<topic> -- PR --> dev -- PR --> main -- 手动发布 --> vX.Y.Z
 | 2026-09-24 | 开发机使用 NVM 提供 Node 20             | 新增前端 Node 前置条件及非交互 shell 的 NVM 初始化方式；CI 保持独立、可复现。                                                     |
 | 2026-09-24 | B.3 发布前门禁                          | `main` 上的手动 Release tag 工作流复跑质量门禁；默认 dry run，只有项目所有者显式关闭后才创建 SemVer 注释标签。GHCR 发布留待 C.3。 |
 | 2026-09-24 | B.4 测试/预发布环境样例与密钥边界       | 新增 test、staging 非敏感环境样例及 GitHub Environment Secrets 映射；CI 只使用 runner 内验证占位值。                              |
+| 2026-09-24 | C.1 GHCR 命名                           | 固定 `ghcr.io/miozen/miora-{server,blog,admin,proxy}` 和 `vX.Y.Z` 发布标签；不创建包或推送镜像。                                  |
+| 2026-09-24 | C.3 GHCR 标签发布                       | `vX.Y.Z` 标签仅在其提交可由 `main` 到达时发布四个 `linux/amd64` GHCR 镜像；发布前复跑质量门禁，另提供仅构建、不推送的 main dry run。 |

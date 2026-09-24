@@ -1,0 +1,119 @@
+services:
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:?set MYSQL_DATABASE in the deployment environment}
+      MYSQL_USER: ${MYSQL_USER:?set MYSQL_USER in the deployment environment}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?set MYSQL_PASSWORD in the deployment environment}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD in the deployment environment}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u",
+          "root",
+          "-p${MYSQL_ROOT_PASSWORD}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  server:
+    image: ghcr.io/miozen/miora-server:${IMAGE_TAG:?set IMAGE_TAG to a vX.Y.Z release}
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      PORT: 9003
+      DB_INFO: mysql:3306/${MYSQL_DATABASE}
+      DB_USERNAME: ${MYSQL_USER}
+      DB_PASSWORD: ${MYSQL_PASSWORD}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?set JWT_SECRET_KEY in the deployment environment}
+      FILE_DIR: /app/upload
+      FILE_PUBLIC_URL: ${FILE_PUBLIC_URL:-}
+      STORAGE_PROVIDER: ${STORAGE_PROVIDER:-local}
+      STORAGE_S3_ENDPOINT: ${STORAGE_S3_ENDPOINT:-}
+      STORAGE_S3_REGION: ${STORAGE_S3_REGION:-}
+      STORAGE_S3_BUCKET: ${STORAGE_S3_BUCKET:-}
+      STORAGE_S3_PREFIX: ${STORAGE_S3_PREFIX:-}
+      STORAGE_S3_ACCESS_KEY: ${STORAGE_S3_ACCESS_KEY:-}
+      STORAGE_S3_SECRET_KEY: ${STORAGE_S3_SECRET_KEY:-}
+      STORAGE_S3_PUBLIC_URL: ${STORAGE_S3_PUBLIC_URL:-}
+      STORAGE_S3_PATH_STYLE: ${STORAGE_S3_PATH_STYLE:-false}
+    volumes:
+      - upload-data:/app/upload
+    healthcheck:
+      test:
+        ["CMD-SHELL", "wget -q -O /dev/null http://localhost:9003/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 45s
+
+  blog:
+    image: ghcr.io/miozen/miora-blog:${IMAGE_TAG:?set IMAGE_TAG to a vX.Y.Z release}
+    restart: unless-stopped
+    depends_on:
+      server:
+        condition: service_healthy
+    environment:
+      PORT: 9001
+      HOSTNAME: 0.0.0.0
+      PROJECT_API_INTERNAL: http://server:9003/api
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'node -e "fetch(''http://localhost:9001'').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"',
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 30s
+
+  admin:
+    image: ghcr.io/miozen/miora-admin:${IMAGE_TAG:?set IMAGE_TAG to a vX.Y.Z release}
+    restart: unless-stopped
+    depends_on:
+      server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 10s
+
+  proxy:
+    image: ghcr.io/miozen/miora-proxy:${IMAGE_TAG:?set IMAGE_TAG to a vX.Y.Z release}
+    restart: unless-stopped
+    depends_on:
+      blog:
+        condition: service_healthy
+      admin:
+        condition: service_healthy
+      server:
+        condition: service_healthy
+    environment:
+      BLOG_HOST: ${BLOG_HOST:?set BLOG_HOST in the deployment environment}
+      ADMIN_HOST: ${ADMIN_HOST:?set ADMIN_HOST in the deployment environment}
+    ports:
+      - "${HTTP_PORT:-80}:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 10s
+
+volumes:
+  mysql-data:
+  upload-data:
