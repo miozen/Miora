@@ -35,6 +35,7 @@ env:
 
 ## 操作边界
 
-1. 由项目所有者在 GitHub 的 `test`、`staging` Environment 中添加或轮换上述 Secrets；Codex 不接收、回显或提交其值。
+1. `test`、`staging` Environment 已于 2026-09-24 配置独立随机的 `MYSQL_PASSWORD`、`MYSQL_ROOT_PASSWORD` 与 `JWT_SECRET_KEY`；其值只可在 GitHub 中轮换，不得回显、下载或提交。两套环境均保持 `local` 存储，未配置 S3 Secrets。
 2. 运行前以受保护的运行时环境注入 Secrets，并使用对应样例执行 Compose；不要将展开后的环境写入工作区、artifact 或日志。
-3. 变更数据库密码或 `JWT_SECRET_KEY` 前必须记录回滚计划；JWT 变更会使现有会话失效。
+3. 正式部署必须新建独立的 `production` Environment 和独立 Secrets；不得引用、复制或提升 test/staging 的值。
+4. 变更数据库密码或 `JWT_SECRET_KEY` 前必须记录回滚计划；JWT 变更会使现有会话失效。
