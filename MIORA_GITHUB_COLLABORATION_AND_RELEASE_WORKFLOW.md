@@ -87,7 +87,8 @@ feature/<topic> -- PR --> dev -- PR --> main -- 手动发布 --> vX.Y.Z
 | 合并到 `main`                                  | 是                   | 否              | 生产候选，等待项目所有者选择版本 |
 | 从 `main` 手动触发 Release tag（默认 dry run） | 是，复跑四项质量门禁 | 否              | 校验版本号与发布前验证           |
 | 从 `main` 手动触发 Release tag（关闭 dry run） | 是，复跑四项质量门禁 | 否              | 创建不可变 `vX.Y.Z` 注释标签     |
-| 推送 `vX.Y.Z` 标签                             | 由后续 C.3 接入      | 由后续 C.3 接入 | 正式镜像发布与可回滚部署         |
+| 推送 `vX.Y.Z` 标签                             | 是，复跑四项质量门禁 | 是              | 发布四个 `linux/amd64` GHCR 镜像 |
+| 从 `main` 手动触发 Publish GHCR images         | 是，复跑四项质量门禁 | 否              | 构建四个镜像的无副作用 dry run   |
 
 ## 首次推送的人工确认点
 
@@ -110,3 +111,4 @@ feature/<topic> -- PR --> dev -- PR --> main -- 手动发布 --> vX.Y.Z
 | 2026-09-24 | B.3 发布前门禁                          | `main` 上的手动 Release tag 工作流复跑质量门禁；默认 dry run，只有项目所有者显式关闭后才创建 SemVer 注释标签。GHCR 发布留待 C.3。 |
 | 2026-09-24 | B.4 测试/预发布环境样例与密钥边界       | 新增 test、staging 非敏感环境样例及 GitHub Environment Secrets 映射；CI 只使用 runner 内验证占位值。                              |
 | 2026-09-24 | C.1 GHCR 命名                           | 固定 `ghcr.io/miozen/miora-{server,blog,admin,proxy}` 和 `vX.Y.Z` 发布标签；不创建包或推送镜像。                                  |
+| 2026-09-24 | C.3 GHCR 标签发布                       | `vX.Y.Z` 标签仅在其提交可由 `main` 到达时发布四个 `linux/amd64` GHCR 镜像；发布前复跑质量门禁，另提供仅构建、不推送的 main dry run。 |
