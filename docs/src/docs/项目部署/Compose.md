@@ -13,18 +13,20 @@ chmod 600 .env
 
 至少替换 `MYSQL_PASSWORD`、`MYSQL_ROOT_PASSWORD` 与 `JWT_SECRET_KEY`。可用 `openssl rand -hex 32` 生成 JWT 密钥。生产环境还需要将 `BLOG_HOST` 和 `ADMIN_HOST` 分别解析到此服务器，并根据实际监听端口设置 `HTTP_PORT`。
 
-| 变量 | 必填 | 说明 |
-| --- | --- | --- |
-| `COMPOSE_PROJECT_NAME` | 建议 | 固定容器、网络和命名卷前缀，升级和恢复时不要随意改动。 |
-| `MYSQL_DATABASE`、`MYSQL_USER` | 是 | 首次初始化时创建的业务数据库与用户。 |
-| `MYSQL_PASSWORD`、`MYSQL_ROOT_PASSWORD` | 是 | 数据库业务用户与 root 密码。 |
-| `JWT_SECRET_KEY` | 是 | 后端 JWT 签名密钥；更换后所有已登录会话失效。 |
-| `HTTP_PORT` | 否 | Nginx 对外 HTTP 端口，默认 `80`。 |
-| `BLOG_HOST`、`ADMIN_HOST` | 是 | 博客与控制端的域名，Nginx 根据 Host 分流。 |
-| `STORAGE_PROVIDER` | 否 | 默认 `local`；只有配置完整 S3 参数后才设为 `s3`。 |
-| `FILE_PUBLIC_URL` | 否 | 同域 Compose 部署留空，文件 URL 为 `/static/upload/...`；后端独立暴露时才填写公开根地址。 |
+| 变量                                    | 必填 | 说明                                                                                      |
+| --------------------------------------- | ---- | ----------------------------------------------------------------------------------------- |
+| `COMPOSE_PROJECT_NAME`                  | 建议 | 固定容器、网络和命名卷前缀，升级和恢复时不要随意改动。                                    |
+| `MYSQL_DATABASE`、`MYSQL_USER`          | 是   | 首次初始化时创建的业务数据库与用户。                                                      |
+| `MYSQL_PASSWORD`、`MYSQL_ROOT_PASSWORD` | 是   | 数据库业务用户与 root 密码。                                                              |
+| `JWT_SECRET_KEY`                        | 是   | 后端 JWT 签名密钥；更换后所有已登录会话失效。                                             |
+| `HTTP_PORT`                             | 否   | Nginx 对外 HTTP 端口，默认 `80`。                                                         |
+| `BLOG_HOST`、`ADMIN_HOST`               | 是   | 博客与控制端的域名，Nginx 根据 Host 分流。                                                |
+| `STORAGE_PROVIDER`                      | 否   | 默认 `local`；只有配置完整 S3 参数后才设为 `s3`。                                         |
+| `FILE_PUBLIC_URL`                       | 否   | 同域 Compose 部署留空，文件 URL 为 `/static/upload/...`；后端独立暴露时才填写公开根地址。 |
 
 S3 变量仅由后端容器读取。不要把 Access Key 或 Secret Key 放进前端构建变量、数据库或 Git；OCI 与腾讯 COS 的具体填写方式见[对象存储](./API/对象存储)。
+
+测试与预发布使用根目录 `environments/test.env.example`、`environments/staging.env.example` 作为非敏感配置样例。数据库密码、JWT 密钥及可选 S3 密钥必须由 GitHub Environment Secrets 或受保护的部署运行时注入；完整变量映射见根目录 `MIORA_ENVIRONMENT_AND_SECRETS.md`。
 
 ## 首次启动
 
@@ -49,9 +51,9 @@ docker compose ps
 
 ## 数据持久化
 
-| 命名卷 | 内容 | 说明 |
-| --- | --- | --- |
-| `${COMPOSE_PROJECT_NAME}_mysql-data` | MySQL 数据目录 | SQL 初始化脚本只会在该卷第一次创建时执行。 |
+| 命名卷                                | 内容                 | 说明                                                   |
+| ------------------------------------- | -------------------- | ------------------------------------------------------ |
+| `${COMPOSE_PROJECT_NAME}_mysql-data`  | MySQL 数据目录       | SQL 初始化脚本只会在该卷第一次创建时执行。             |
 | `${COMPOSE_PROJECT_NAME}_upload-data` | `local` 模式上传文件 | 容器重建不会删除该卷；使用 S3 时文件数据在 bucket 中。 |
 
 不要执行 `docker compose down -v`，除非确认要同时删除数据库和本地上传文件。
