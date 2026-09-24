@@ -33,7 +33,7 @@
 - [x] C.1 确定镜像命名：`ghcr.io/<owner>/miora-server`、`miora-blog`、`miora-admin`、`miora-proxy`（或以单一发布仓库命名空间统一管理）。
 - [x] C.2 调整 Dockerfile 与 Compose：开发模式可保留 `build`，生产 Compose 改为引用带版本标签的 `image`，不依赖本机源码。
 - [x] C.3 编写 GitHub Actions 工作流：在 `main` 发布版本 tag 时构建、测试、推送四个 `linux/amd64` 镜像；另提供仅构建的 main dry run。
-- [ ] C.4 选择镜像可见性：公开 GHCR 镜像，或在 VPS 安全保存只读 GHCR Pull Token 后登录拉取。
+- [x] C.4 选择镜像可见性：四个 GHCR 镜像均为公开包；VPS 匿名拉取，不保存 GHCR Pull Token。
 - [ ] C.5 新增生产环境文件样例：只包含镜像 tag、域名、密码与存储变量，不含构建路径。
 - [ ] C.6 验收：在无源码的干净 Alpine 主机执行 `docker compose pull` 和 `docker compose up -d`，五个服务健康。
 - [ ] C.7 回滚演练：将镜像 tag 回退到上一个版本，确认数据卷不被删除且站点恢复。
@@ -117,3 +117,4 @@
 - 2026-09-24，C.3 完成：新增 `Publish GHCR images` 工作流。推送 `vX.Y.Z` 标签时，工作流验证标签提交可由 `main` 到达、复跑 `Server`、`Admin`、`Blog`、`Compose` 四项质量门禁，然后分别构建并以 `GITHUB_TOKEN` 推送 Server、Blog、Admin、Proxy 四个 `linux/amd64` GHCR 镜像；每个镜像使用版本标签和同一完整提交 SHA 的审计标签，未使用 `latest`。从 `main` 手动触发时工作流只构建不推送，供无副作用 dry run 使用。本轮不创建版本标签、不创建 GHCR 包；首次 dry run 在工作流合并并进入 `main` 后执行。
 - 2026-09-24，C.3 修正：首次 main dry run 中 Blog 拉取 `docker.m.daocloud.io/library/node:20-alpine` 的匿名令牌发生 TLS handshake timeout；这不是应用构建错误。为避免发布依赖不稳定的第三方镜像加速器，Server、Blog、Admin 的 Dockerfile 基础镜像统一改为官方 Docker Hub 镜像，随后重新执行 dry run。
 - 2026-09-24，C.3 验收：main 提交 `551f181d1d2bcedd0ef6d8f50472d5c05b032ca7` 的无副作用 dry run 全绿：<https://github.com/miozen/Miora/actions/runs/35996471464>。四项质量门禁和 Server、Blog、Admin、Proxy 四个 `linux/amd64` 镜像构建均通过；`docker/login-action` 在手动模式被跳过，未创建版本标签、GHCR 包或推送镜像。
+- 2026-09-24，C.4 完成：项目所有者决定四个 Miora GHCR 包为 Public；首次正式版本标签创建包后，由所有者在 GitHub Package settings 将其逐一设为 Public，VPS 随后匿名拉取且不保存 Pull Token。新增公开 GHCR 首发、无源码服务器、升级和回滚教程；真实生产密钥仍只留在服务器受保护 `.env`。由于尚未创建正式版本标签，当前没有 GHCR 包可切换可见性。
