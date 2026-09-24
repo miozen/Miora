@@ -42,7 +42,7 @@ ssh://git@ssh.github.com:443/miozen/Miora.git
 ## GHCR 镜像命名
 
 - GHCR 命名空间固定为 `ghcr.io/miozen`；Server、Blog、Admin、Proxy 分别使用 `miora-server`、`miora-blog`、`miora-admin`、`miora-proxy`。完整映射与版本语义以 `MIORA_GHCR_IMAGE_CONVENTION.md` 为准。
-- 生产镜像必须使用与 Git 发布标签对应的 `vX.Y.Z` 标签，不得使用 `latest` 或不固定的分支标签。C.2/C.3/C.4 分别实现生产 Compose、构建推送和包访问控制。
+- 生产镜像必须使用与 Git 发布标签对应的 `vX.Y.Z` 标签，不得使用 `latest` 或不固定的分支标签。四个 Miora GHCR 包固定为 Public；VPS 匿名拉取，不保存 Pull Token。C.2/C.3/C.4 分别实现生产 Compose、构建推送和公开包访问控制。
 - `compose.production.yaml` 只允许使用版本镜像、命名卷和运行时环境变量；禁止 `build`、源码目录与本地 Nginx 配置挂载。数据库初始化必须走经审查的迁移流程，不从部署源码树挂载 SQL。
 
 ## 协作回合契约
@@ -112,3 +112,4 @@ feature/<topic> -- PR --> dev -- PR --> main -- 手动发布 --> vX.Y.Z
 | 2026-09-24 | B.4 测试/预发布环境样例与密钥边界       | 新增 test、staging 非敏感环境样例及 GitHub Environment Secrets 映射；CI 只使用 runner 内验证占位值。                              |
 | 2026-09-24 | C.1 GHCR 命名                           | 固定 `ghcr.io/miozen/miora-{server,blog,admin,proxy}` 和 `vX.Y.Z` 发布标签；不创建包或推送镜像。                                  |
 | 2026-09-24 | C.3 GHCR 标签发布                       | `vX.Y.Z` 标签仅在其提交可由 `main` 到达时发布四个 `linux/amd64` GHCR 镜像；发布前复跑质量门禁，另提供仅构建、不推送的 main dry run。 |
+| 2026-09-24 | C.4 GHCR 可见性                         | 项目所有者选择四个 Miora 容器包为 Public；首次标签创建包后由所有者设为公开，VPS 匿名拉取且不保存 Pull Token。 |

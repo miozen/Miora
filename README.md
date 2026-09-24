@@ -20,7 +20,7 @@ Miora 是一个由 Spring Boot API、Next.js 访客站、React 管理后台和 V
 2. 启动服务：`docker compose up -d --build`。
 3. 查看服务状态：`docker compose ps`。
 
-完整部署、备份和恢复说明见 [Compose 文档](docs/src/docs/项目部署/Compose.md)。生产环境必须使用两个域名分别承载 Blog 与 Admin，并在上线前配置 HTTPS 与访问边界。
+完整部署、备份和恢复说明见 [Compose 文档](docs/src/docs/项目部署/Compose.md)；使用公开 GHCR 镜像的无源码服务器发布流程见 [GHCR 生产镜像部署](docs/src/docs/项目部署/GHCR生产镜像.md)。生产环境必须使用两个域名分别承载 Blog 与 Admin，并在上线前配置 HTTPS 与访问边界。
 
 ## 开发与发布
 
