@@ -1,0 +1,111 @@
+name: Publish GHCR images
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "SemVer version used for a build-only dry run, for example v0.0.0-ci"
+        required: true
+        default: "v0.0.0-ci"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate release tag
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.release.outputs.version }}
+      revision: ${{ steps.release.outputs.revision }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - id: release
+        env:
+          VERSION_INPUT: ${{ inputs.version }}
+        run: |
+          if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+            version="$GITHUB_REF_NAME"
+            revision="$(git rev-list -n 1 "$GITHUB_REF")"
+            git fetch origin main
+            if ! git merge-base --is-ancestor "$revision" origin/main; then
+              echo "The release tag must point to a commit reachable from main." >&2
+              exit 1
+            fi
+          else
+            if [[ "$GITHUB_REF" != "refs/heads/main" ]]; then
+              echo "A GHCR dry run can only be dispatched from main." >&2
+              exit 1
+            fi
+            version="$VERSION_INPUT"
+            revision="$GITHUB_SHA"
+          fi
+
+          if ! [[ "$version" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$ ]]; then
+            echo "Version must be a v-prefixed SemVer value, for example v1.2.3." >&2
+            exit 1
+          fi
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "revision=$revision" >> "$GITHUB_OUTPUT"
+
+  quality:
+    name: Release quality gates
+    needs: validate
+    uses: ./.github/workflows/ci.yml
+
+  image:
+    name: Build ${{ matrix.image }}
+    needs: [validate, quality]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: miora-server
+            context: server
+            dockerfile: server/Dockerfile
+          - image: miora-blog
+            context: blog
+            dockerfile: blog/Dockerfile
+          - image: miora-admin
+            context: admin
+            dockerfile: admin/Dockerfile
+          - image: miora-proxy
+            context: deploy/nginx
+            dockerfile: deploy/nginx/Dockerfile
+    steps:
+      - uses: actions/checkout@v5
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        if: github.event_name == 'push'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          platforms: linux/amd64
+          push: ${{ github.event_name == 'push' }}
+          tags: |
+            ghcr.io/miozen/${{ matrix.image }}:${{ needs.validate.outputs.version }}
+            ghcr.io/miozen/${{ matrix.image }}:sha-${{ needs.validate.outputs.revision }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ needs.validate.outputs.revision }}
+            org.opencontainers.image.version=${{ needs.validate.outputs.version }}
+          build-args: |
+            VCS_REF=${{ needs.validate.outputs.revision }}
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
