@@ -1,0 +1,59 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+*.pem
+*.key
+*.p12
+*.jks
+id_rsa
+
+# Node.js
+**/node_modules/
+**/.next/
+**/.vite/
+**/dist/
+**/dist-ssr/
+**/coverage/
+**/build/
+**/.vercel/
+**/.pnp
+**/.pnp.js
+**/*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Java and local runtime data
+**/target/
+server/upload/
+server/docker/mysql_data/
+server/docker/backup/
+*.log
+
+# Editor and operating system files
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.iml
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+Thumbs.db
+
+# Package-manager caches and temporary files
+.npm/
+.yarn/*
+!.yarn/patches
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
+*.tmp
+*.temp

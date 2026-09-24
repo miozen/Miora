@@ -1,0 +1,35 @@
+import SwiperClient from './components/SwiperClient';
+import Classics from './Classics';import Waterfall from './Waterfall';
+import Card from './Card';
+import Pagination from '../Pagination';
+
+import { Theme } from '@/types/app/config';import { Swiper as SwiperItem } from '@/types/app/swiper';
+import { Article } from '@/types/app/article';
+
+interface Props {
+  page: number;
+  basePath: string;
+  theme: Theme;
+  covers: string[];
+  swiper: { result?: SwiperItem[] };
+  data: Paginate<Article[]>;
+}
+
+export default ({ page, basePath, theme, covers, swiper, data }: Props) => {
+  const sidebar = theme?.right_sidebar ?? [];
+  const articleLayout = theme?.is_article_layout ?? 'classics';
+
+  return (
+    <div className={`w-full md:w-[90%] ${sidebar?.length ? 'lg:w-[68%] xl:w-[73%]' : 'w-full'} mx-auto transition-width`}>
+      {!!swiper.result?.length && <SwiperClient data={swiper.result} />}
+
+      {articleLayout === 'classics' && <Classics data={data} covers={covers} />}
+      {articleLayout === 'card' && <Card data={data} covers={covers} />}
+      {articleLayout === 'waterfall' && <Waterfall data={data} covers={covers} />}
+
+      {!!data.total && (
+        <Pagination total={data.pages} page={page} basePath={basePath} className="flex justify-center mt-5" />
+      )}
+    </div>
+  );
+};

@@ -1,0 +1,50 @@
+/**
+ * 按需刷新 ISR 缓存的 Webhook 接口。
+ * 后台在内容变更后直接 POST 调用，即可使指定 cache tag 失效并触发重新生成。
+ */
+
+import { revalidateTag } from 'next/cache';
+import { NextRequest, NextResponse } from 'next/server';
+
+import { CACHE_TAGS, isAllowedCacheTag } from '@/lib/cache-tags';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+};
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: corsHeaders });
+}
+
+export async function POST(req: NextRequest) {
+  // 默认清空全部缓存标签
+  let tags: string[] = Object.values(CACHE_TAGS);
+
+  try {
+    // 解析请求体
+    const body = await req.json();
+    // 如果请求体是数组，则使用数组中的标签；否则使用单个标签
+    if (Array.isArray(body?.tags)) {
+      tags = body.tags;
+    } else if (typeof body?.tag === 'string') {
+      tags = [body.tag];
+    }
+  } catch {
+    // 无 body 时使用默认 tags
+  }
+
+  // 过滤掉无效的标签 使用 isAllowedCacheTag 判断是否是允许的缓存标签
+  const invalidTags = tags.filter((tag) => !isAllowedCacheTag(tag));
+  // 如果无效的标签，则返回 400 错误
+  if (invalidTags.length) {
+    return NextResponse.json({ message: 'Invalid tags', invalidTags }, { status: 400, headers: corsHeaders });
+  }
+
+  // 重新验证标签，标记 max 允许先返回旧数据，同时在后台拉新数据
+  tags.forEach((tag) => revalidateTag(tag, 'max'));
+
+  // 返回响应
+  return NextResponse.json({ revalidated: true, tags }, { headers: corsHeaders });
+}

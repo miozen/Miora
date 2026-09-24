@@ -1,0 +1,173 @@
+'use client';
+
+import { useState } from 'react';
+import { Modal, Button, Spinner } from '@/ThriveUI';
+import { RiDownloadLine, RiLink, RiShareForwardLine } from 'react-icons/ri';
+import { toast } from 'react-toastify';
+import { cn } from '@/lib/utils';
+import {
+  actionCardClass,
+  actionCardDividerClass,
+  actionIconWrapClass,
+  actionLabelClass,
+  actionMinimalCountClass,
+  actionMinimalIconClass,
+  actionMinimalItemClass,
+  actionPrimaryClass,
+  actionTextColClass,
+} from '@/components/ActionCard/styles';
+import { useAppConfig } from '@/components/AppConfigProvider';
+import { generateArticlePoster } from '@/utils/generateArticlePoster';
+import dayjs from 'dayjs';
+
+export interface ArticleShareData {
+  articleId: number;
+  title: string;
+  description: string;
+  cover: string;
+  createTime: string | number;
+  view?: number;
+  likeCount?: number;
+}
+
+interface Props {
+  data: ArticleShareData;
+  minimal?: boolean;
+  className?: string;
+  shareCount?: number;
+  onShare?: () => void;
+}
+
+export default function ArticleSharePoster({ data, minimal = false, className, shareCount, onShare }: Props) {
+  const [open, setOpen] = useState(false);
+  const [posterUrl, setPosterUrl] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const { web, author } = useAppConfig();
+
+  const buildPoster = async () => {
+    setLoading(true);
+    setPosterUrl('');
+    try {
+      const base = web?.url?.replace(/\/$/, '') || window.location.origin;
+      const articleUrl = `${base}/article/${data.articleId}`;
+
+      const url = await generateArticlePoster({
+        title: data.title,
+        description: data.description || data.title,
+        cover: data.cover,
+        siteName: web?.title || 'ThriveX',
+        siteUrl: web?.url || window.location.origin,
+        articleUrl,
+        favicon: web?.favicon,
+        authorName: author?.name,
+        createTime: dayjs(+data.createTime).format('YYYY-MM-DD'),
+        view: data.view,
+        likeCount: data.likeCount,
+      });
+      setPosterUrl(url);
+    } catch (error) {
+      console.error('生成海报失败:', error);
+      toast.error('海报生成失败，请稍后重试');
+      setOpen(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOpen = () => {
+    onShare?.();
+    setOpen(true);
+    void buildPoster();
+  };
+
+  const handleDownload = () => {
+    if (!posterUrl) return;
+    const link = document.createElement('a');
+    link.download = `${data.title.slice(0, 20)}-分享海报.png`;
+    link.href = posterUrl;
+    link.click();
+    toast.success('海报已保存');
+  };
+
+  const handleCopyLink = async () => {
+    const base = web?.url?.replace(/\/$/, '') || window.location.origin;
+    const articleUrl = `${base}/article/${data.articleId}`;
+    try {
+      await navigator.clipboard.writeText(articleUrl);
+      toast.success('链接已复制');
+    } catch {
+      toast.error('复制失败，请手动复制');
+    }
+  };
+
+  return (
+    <>
+      {minimal ? (
+        <button
+          type="button"
+          onClick={handleOpen}
+          aria-label="生成分享海报"
+          className={cn(actionMinimalItemClass, 'hover:bg-primary/10 dark:hover:bg-primary/15', className)}
+        >
+          <RiShareForwardLine className={cn(actionMinimalIconClass, 'text-lg text-primary')} />
+          {typeof shareCount === 'number' && (
+            <span className={cn('tabular-nums', actionMinimalCountClass)}>{shareCount}</span>
+          )}
+        </button>
+      ) : (
+        <div className="relative inline-flex select-none flex-col items-center">
+          <button
+            type="button"
+            onClick={handleOpen}
+            className={cn(actionCardClass('blue', className), 'cursor-pointer transition-colors')}
+            aria-label="生成分享海报"
+          >
+            <span className={actionIconWrapClass}>
+              <RiShareForwardLine className="h-14 w-14 text-primary" />
+            </span>
+            <div className={actionCardDividerClass('blue')} aria-hidden />
+            <div className={actionTextColClass}>
+              <span className={actionPrimaryClass}>分享</span>
+              <span className={actionLabelClass}>生成海报</span>
+            </div>
+          </button>
+        </div>
+      )}
+
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        title="分享海报"
+        className="max-w-xl px-4 sm:px-5"
+        footer={
+          <>
+            <Button variant="light" onPress={() => setOpen(false)}>
+              关闭
+            </Button>
+            <Button variant="flat" color="primary" startContent={<RiLink />} onPress={() => void handleCopyLink()} isDisabled={loading}>
+              复制链接
+            </Button>
+            <Button color="primary" startContent={<RiDownloadLine />} onPress={handleDownload} isDisabled={loading || !posterUrl}>
+              下载海报
+            </Button>
+          </>
+        }
+      >
+        {loading ? (
+          <div className="flex flex-col items-center justify-center gap-3 py-16">
+            <Spinner size="lg" color="primary" />
+            <p className="text-sm text-slate-400">正在生成海报…</p>
+          </div>
+        ) : posterUrl ? (
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-full overflow-hidden rounded-xl border border-slate-200/80 shadow-lg dark:border-white/10">
+              <img src={posterUrl} alt="文章分享海报" className="w-full object-contain" />
+            </div>
+            <p className="text-center text-xs text-slate-400">长按或下载保存，分享给好友吧</p>
+          </div>
+        ) : null}
+      </Modal>
+    </>
+  );
+}

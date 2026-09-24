@@ -1,0 +1,37 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-primary: #539dfd;
+  --color-foreground: #333333;
+  --color-surface: #ffffff;
+  --color-background: #f9f9f9;
+  --color-black-a: #232931;
+  --color-black-b: #2c333e;
+  --color-border: #eeeeee;
+
+  --shadow-panel: 0 4px 24px -4px rgba(0, 0, 0, 0.12);
+
+  --breakpoint-xs: 400px;
+
+  --default-transition-duration: 300ms;
+}
+
+.dark {
+  --color-foreground: #e5e7eb;
+  --color-surface: #2c333e;
+  --color-background: #232931;
+  --color-border: #4e5969;
+  --shadow-panel: 0 4px 24px -4px rgba(0, 0, 0, 0.45);
+}
+
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-border);
+  }
+}
