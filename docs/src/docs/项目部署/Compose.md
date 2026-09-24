@@ -70,6 +70,18 @@ docker compose ps
 
 该命令会重建变更的服务，但保留两个命名卷。升级后检查 `server`、`blog`、`admin` 与 `proxy` 的健康状态，再访问博客、控制端和上传文件。若升级涉及数据库结构变更，必须先阅读该版本的迁移说明；本一期不提供自动数据库迁移。
 
+## 生产镜像部署
+
+生产环境使用根目录 `compose.production.yaml`，它只引用 GHCR 的版本镜像，不包含 `build`、源码目录或 Nginx 配置挂载。部署前必须由受保护的运行时注入数据库、JWT 与可选 S3 密钥，并设置明确的 `IMAGE_TAG=vX.Y.Z`；禁止使用 `latest`。
+
+```bash
+docker compose -f compose.production.yaml pull
+docker compose -f compose.production.yaml up -d --remove-orphans
+docker compose -f compose.production.yaml ps
+```
+
+生产 MySQL 卷不会从仓库 SQL 文件初始化。首次部署前必须通过经过审查的数据库初始化/迁移流程准备数据库；不要把源码树或 `server/ThriveX.sql` 挂载到生产服务器。镜像命名与标签规则见根目录 `MIORA_GHCR_IMAGE_CONVENTION.md`；C.3 完成前 GHCR 不会有可拉取的 Miora 镜像。
+
 ## 备份
 
 在宿主机创建受保护的备份目录后，导出数据库和本地上传文件：

@@ -43,6 +43,7 @@ ssh://git@ssh.github.com:443/miozen/Miora.git
 
 - GHCR 命名空间固定为 `ghcr.io/miozen`；Server、Blog、Admin、Proxy 分别使用 `miora-server`、`miora-blog`、`miora-admin`、`miora-proxy`。完整映射与版本语义以 `MIORA_GHCR_IMAGE_CONVENTION.md` 为准。
 - 生产镜像必须使用与 Git 发布标签对应的 `vX.Y.Z` 标签，不得使用 `latest` 或不固定的分支标签。C.2/C.3/C.4 分别实现生产 Compose、构建推送和包访问控制。
+- `compose.production.yaml` 只允许使用版本镜像、命名卷和运行时环境变量；禁止 `build`、源码目录与本地 Nginx 配置挂载。数据库初始化必须走经审查的迁移流程，不从部署源码树挂载 SQL。
 
 ## 协作回合契约
 

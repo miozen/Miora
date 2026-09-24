@@ -14,6 +14,10 @@ COPY . .
 RUN mvn clean package -DskipTests
 # 使用国内代理 Java8 镜像
 FROM docker.m.daocloud.io/library/eclipse-temurin:8-jre-alpine AS runner
+ARG VCS_REF=unknown
+LABEL org.opencontainers.image.source="https://github.com/miozen/Miora" \
+      org.opencontainers.image.revision="$VCS_REF" \
+      org.opencontainers.image.title="miora-server"
 # 设置应用目录
 WORKDIR /app
 # 设置运行端口

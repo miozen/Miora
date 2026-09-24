@@ -16,6 +16,10 @@ ENV VITE_PROJECT_API=$VITE_PROJECT_API
 RUN npm run build
 # 使用国内代理 Nginx 镜像
 FROM docker.m.daocloud.io/library/nginx:1.27-alpine AS runner
+ARG VCS_REF=unknown
+LABEL org.opencontainers.image.source="https://github.com/miozen/Miora" \
+      org.opencontainers.image.revision="$VCS_REF" \
+      org.opencontainers.image.title="miora-admin"
 # 写入 Nginx 路由配置
 RUN printf 'server { listen 80; server_name _; root /usr/share/nginx/html; index index.html; location / { try_files $uri $uri/ /index.html; } }' > /etc/nginx/conf.d/default.conf
 #复制静态文件
