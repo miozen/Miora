@@ -80,7 +80,7 @@ docker compose -f compose.production.yaml up -d --remove-orphans
 docker compose -f compose.production.yaml ps
 ```
 
-生产 MySQL 卷不会从仓库 SQL 文件初始化。首次部署前必须通过经过审查的数据库初始化/迁移流程准备数据库；不要把源码树或 `server/ThriveX.sql` 挂载到生产服务器。镜像命名与标签规则见根目录 `MIORA_GHCR_IMAGE_CONVENTION.md`；C.3 完成前 GHCR 不会有可拉取的 Miora 镜像。
+生产 MySQL 卷不会从仓库 SQL 文件初始化。首次部署前必须通过经过审查的数据库初始化/迁移流程准备数据库；不要把源码树或 `server/ThriveX.sql` 挂载到生产服务器。镜像命名与标签规则见根目录 `MIORA_GHCR_IMAGE_CONVENTION.md`。公开镜像的首次发布、无源码服务器部署、升级和回滚步骤见 [GHCR 生产镜像部署](./GHCR生产镜像)。
 
 ## 备份
 
