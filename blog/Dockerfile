@@ -1,5 +1,5 @@
-# 使用国内代理 Node20 镜像
-FROM docker.m.daocloud.io/library/node:20-alpine AS base
+# 使用官方 Node 20 镜像，保证 GitHub Actions 可稳定拉取
+FROM node:20-alpine AS base
 # 安装 Alpine兼容库
 RUN apk add --no-cache libc6-compat
 # 设置应用目录
