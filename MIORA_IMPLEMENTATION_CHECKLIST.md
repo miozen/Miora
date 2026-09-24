@@ -18,13 +18,13 @@
 - [x] A.3 将 Server、Admin、Blog、Docs 纳入统一根目录；根目录 Compose 的构建上下文改为新目录结构。
 - [x] A.4 统一根目录 `.gitignore`、编辑器配置、许可证、贡献说明和根 README。
 - [x] A.5 配置 GitHub 分支保护：`main` 禁止直接推送，要求 PR 与 CI 通过。
-- [ ] A.6 验收：全新目录执行 clone 后，`docker compose config` 能解析所有构建上下文。
+- [x] A.6 验收：全新目录执行 clone 后，`docker compose config` 能解析所有构建上下文。
 
 ## B. 分支与质量门禁
 
 - [x] B.1 建立分支约定：`feature/*` -> `dev` -> `main`，并约定紧急修复分支的回合路径。
 - [x] B.2 为 PR 到 `dev` 配置 CI：后端 Maven 测试、Admin lint/build、Blog lint/build、Compose 配置校验。
-- [ ] B.3 为 `main` 配置发布前 CI：复跑质量门禁，并生成版本号与 Git tag。
+- [~] B.3 为 `main` 配置发布前 CI：复跑质量门禁，并生成版本号与 Git tag。
 - [ ] B.4 建立测试/预发布环境变量样例；所有密钥使用 GitHub Secrets，不提交 `.env`。
 - [ ] B.5 验收：故意提交一项 lint 或测试失败的变更，确认无法合并到受保护分支。
 
@@ -108,3 +108,4 @@
 - 2026-09-24，A.5 完成：已创建并推送首个单体仓库提交 `04e89d2`（`chore: initialize Miora monorepo`）到 `main`；远端使用固定 SSH-over-443 地址 `ssh://git@ssh.github.com:443/miozen/Miora.git`，并已验证远端 SHA 一致。GitHub `main` 与 `dev` 已启用分支保护：要求 PR、管理员受规则约束、禁止强推和删除、要求解决对话；目前为单维护者设置 0 个必需批准评审。两条分支均启用严格必需状态检查：`Server`、`Admin`、`Blog`、`Compose`。已检查提交候选、忽略规则和已提交内容的私钥/AWS Access Key 模式；推送前移除了遗漏的 `admin/.vite/` 缓存。
 - 2026-09-24，B.1 完成：从 `main` 创建并推送集成分支 `dev`，随后创建 `feature/branch-workflow` 用于承载本轮规范与 A.5 记录的 PR。工作流已明确常规 `feature/* -> dev -> main` 路径，以及 `hotfix/*` 从 `main` 到 `main`、再回补 `dev` 的路径。验收：确认 `dev` 基于 `main` 的提交建立；本轮 PR 指向 `dev`，待 B.2 的 CI 建立后合并。
 - 2026-09-24，B.2 完成：新增根目录 GitHub Actions 工作流，覆盖后端 `mvn -pl blog -am test`、Admin `npm run build`（其构建脚本已包含 lint）、Blog `npm run lint` 与 `npm run build`、以及 `docker compose --env-file .env.example config --quiet`。GitHub Actions 首次运行已全部通过：<https://github.com/miozen/Miora/actions/runs/35965134679>；本地 Maven（8 项测试）与 Compose 配置也已通过。工作流使用 Actions v5，避免首轮运行报告的旧版运行时弃用警告。
+- 2026-09-24，A.6 完成：在一次性干净目录 `/tmp/miora-a6-2Re8l1` 从 GitHub SSH-over-443 克隆 `dev`，检出提交 `3d301a9918d5297c152f8bc891879c23830e6e9a`。验收：`docker compose --env-file .env.example config --quiet` 通过；`server/`、`blog/`、`admin/` 均存在且各自包含 `Dockerfile`，并确认 `server/ThriveX.sql` 和 `deploy/nginx/default.conf.template` 两个 Compose 挂载源存在。开发机 Node 环境已核验为 NVM 管理的 Node `v20.20.2`、npm `10.8.2`；无容器构建、提交或推送。
