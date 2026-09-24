@@ -65,6 +65,13 @@ jobs:
   compose:
     name: Compose
     runs-on: ubuntu-latest
+    env:
+      MYSQL_PASSWORD: ci-validation-database-password
+      MYSQL_ROOT_PASSWORD: ci-validation-root-password
+      JWT_SECRET_KEY: ci-validation-jwt-secret
     steps:
       - uses: actions/checkout@v5
-      - run: docker compose --env-file .env.example config --quiet
+      - run: |
+          for env_file in .env.example environments/test.env.example environments/staging.env.example; do
+            docker compose --env-file "$env_file" config --quiet
+          done

@@ -5,6 +5,10 @@
 **/.env
 **/.env.*
 !**/.env.example
+
+# Runtime copies of checked-in test/staging templates
+/environments/*.env
+!/environments/*.env.example
 *.pem
 *.key
 *.p12
