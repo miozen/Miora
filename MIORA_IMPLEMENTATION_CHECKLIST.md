@@ -30,7 +30,7 @@
 
 ## C. GHCR 生产镜像发布
 
-- [ ] C.1 确定镜像命名：`ghcr.io/<owner>/miora-server`、`miora-blog`、`miora-admin`、`miora-proxy`（或以单一发布仓库命名空间统一管理）。
+- [x] C.1 确定镜像命名：`ghcr.io/<owner>/miora-server`、`miora-blog`、`miora-admin`、`miora-proxy`（或以单一发布仓库命名空间统一管理）。
 - [ ] C.2 调整 Dockerfile 与 Compose：开发模式可保留 `build`，生产 Compose 改为引用带版本标签的 `image`，不依赖本机源码。
 - [ ] C.3 编写 GitHub Actions 工作流：在 `main` 合并和版本 tag 时构建、测试、推送多架构镜像；至少包含目标 VPS 的 `linux/amd64`。
 - [ ] C.4 选择镜像可见性：公开 GHCR 镜像，或在 VPS 安全保存只读 GHCR Pull Token 后登录拉取。
@@ -112,3 +112,4 @@
 - 2026-09-24，B.3 完成：新增 `Release tag` 手动工作流，只允许从 `main` 发起，要求显式提供严格的 `vX.Y.Z` SemVer 版本，并在创建标签前复跑 `Server`、`Admin`、`Blog`、`Compose`；默认 `dry_run=true`，仅显式关闭后才使用 GitHub Actions 身份创建注释标签。验收：从 `main` 提交 `ebbda6665d8fe017ff90fb2d6aa6c6322d8a2005` 以 `v0.1.0` 执行 dry run，全部门禁通过：<https://github.com/miozen/Miora/actions/runs/35967052876>；确认不存在 `v0.1.0` 标签。GHCR 镜像构建与发布仍由 C.3 实施。
 - 2026-09-24，B.4 完成：新增 `environments/test.env.example`、`environments/staging.env.example`，其中只保留非敏感 Compose 配置；真实运行时文件 `environments/*.env` 已由根 `.gitignore` 保护。已创建 GitHub Environments `test`、`staging`，并在 `MIORA_ENVIRONMENT_AND_SECRETS.md` 固定数据库、JWT 和可选 S3 密钥的同名 Environment Secrets 映射及注入边界。Compose CI 同时以 runner 内无价值占位值验证三份样例；在项目所有者明确授权后，已为 `test`、`staging` 分别配置独立随机的数据库/JWT Secrets，未读取、输出或提交其值，且未配置 S3 Secrets。
 - 2026-09-24，B.5 完成：在一次性分支 `feature/b5-required-check-rejection` 添加明确失败的 JUnit 测试并创建 PR #10 到 `dev`。GitHub CI 中 `Server` 失败、`Admin`、`Blog`、`Compose` 通过，PR 合并状态为 `BLOCKED`：<https://github.com/miozen/Miora/actions/runs/35969923505>。验证后关闭 PR #10，`mergedAt` 为 null；失败夹具未进入 `dev` 或 `main`，远端分支保留为审计证据。
+- 2026-09-24，C.1 完成：固定 GHCR 命名空间为 `ghcr.io/miozen`，分别使用 `miora-server`、`miora-blog`、`miora-admin`、`miora-proxy`；`mysql` 保持上游镜像。Git 发布标签与生产镜像标签均使用 `vX.Y.Z`，禁止 `latest`。完整约定见 `MIORA_GHCR_IMAGE_CONVENTION.md`；本轮未创建 GHCR 包、未构建或推送镜像。
