@@ -26,7 +26,7 @@
 - [x] B.2 为 PR 到 `dev` 配置 CI：后端 Maven 测试、Admin lint/build、Blog lint/build、Compose 配置校验。
 - [x] B.3 为 `main` 配置发布前 CI：复跑质量门禁，并生成版本号与 Git tag。
 - [x] B.4 建立测试/预发布环境变量样例；所有密钥使用 GitHub Secrets，不提交 `.env`。
-- [ ] B.5 验收：故意提交一项 lint 或测试失败的变更，确认无法合并到受保护分支。
+- [x] B.5 验收：故意提交一项 lint 或测试失败的变更，确认无法合并到受保护分支。
 
 ## C. GHCR 生产镜像发布
 
@@ -111,3 +111,4 @@
 - 2026-09-24，A.6 完成：在一次性干净目录 `/tmp/miora-a6-2Re8l1` 从 GitHub SSH-over-443 克隆 `dev`，检出提交 `3d301a9918d5297c152f8bc891879c23830e6e9a`。验收：`docker compose --env-file .env.example config --quiet` 通过；`server/`、`blog/`、`admin/` 均存在且各自包含 `Dockerfile`，并确认 `server/ThriveX.sql` 和 `deploy/nginx/default.conf.template` 两个 Compose 挂载源存在。开发机 Node 环境已核验为 NVM 管理的 Node `v20.20.2`、npm `10.8.2`；无容器构建、提交或推送。
 - 2026-09-24，B.3 完成：新增 `Release tag` 手动工作流，只允许从 `main` 发起，要求显式提供严格的 `vX.Y.Z` SemVer 版本，并在创建标签前复跑 `Server`、`Admin`、`Blog`、`Compose`；默认 `dry_run=true`，仅显式关闭后才使用 GitHub Actions 身份创建注释标签。验收：从 `main` 提交 `ebbda6665d8fe017ff90fb2d6aa6c6322d8a2005` 以 `v0.1.0` 执行 dry run，全部门禁通过：<https://github.com/miozen/Miora/actions/runs/35967052876>；确认不存在 `v0.1.0` 标签。GHCR 镜像构建与发布仍由 C.3 实施。
 - 2026-09-24，B.4 完成：新增 `environments/test.env.example`、`environments/staging.env.example`，其中只保留非敏感 Compose 配置；真实运行时文件 `environments/*.env` 已由根 `.gitignore` 保护。已创建 GitHub Environments `test`、`staging`，并在 `MIORA_ENVIRONMENT_AND_SECRETS.md` 固定数据库、JWT 和可选 S3 密钥的同名 Environment Secrets 映射及注入边界。Compose CI 同时以 runner 内无价值占位值验证三份样例；在项目所有者明确授权后，已为 `test`、`staging` 分别配置独立随机的数据库/JWT Secrets，未读取、输出或提交其值，且未配置 S3 Secrets。
+- 2026-09-24，B.5 完成：在一次性分支 `feature/b5-required-check-rejection` 添加明确失败的 JUnit 测试并创建 PR #10 到 `dev`。GitHub CI 中 `Server` 失败、`Admin`、`Blog`、`Compose` 通过，PR 合并状态为 `BLOCKED`：<https://github.com/miozen/Miora/actions/runs/35969923505>。验证后关闭 PR #10，`mergedAt` 为 null；失败夹具未进入 `dev` 或 `main`，远端分支保留为审计证据。
