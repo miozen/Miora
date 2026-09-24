@@ -75,3 +75,13 @@ jobs:
           for env_file in .env.example environments/test.env.example environments/staging.env.example; do
             docker compose --env-file "$env_file" config --quiet
           done
+      - env:
+          IMAGE_TAG: v0.0.0-ci
+          MYSQL_DATABASE: miora_ci
+          MYSQL_USER: miora
+          MYSQL_PASSWORD: ci-validation-database-password
+          MYSQL_ROOT_PASSWORD: ci-validation-root-password
+          JWT_SECRET_KEY: ci-validation-jwt-secret
+          BLOG_HOST: ci.example.com
+          ADMIN_HOST: admin.ci.example.com
+        run: docker compose -f compose.production.yaml config --quiet

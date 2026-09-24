@@ -26,6 +26,10 @@ ENV NEXT_PUBLIC_PROJECT_API=$NEXT_PUBLIC_PROJECT_API
 RUN npm run build
 # 使用运行阶段
 FROM base AS runner
+ARG VCS_REF=unknown
+LABEL org.opencontainers.image.source="https://github.com/miozen/Miora" \
+      org.opencontainers.image.revision="$VCS_REF" \
+      org.opencontainers.image.title="miora-blog"
 # 设置生产环境
 ENV NODE_ENV=production
 # 设置容器端口
