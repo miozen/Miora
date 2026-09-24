@@ -60,10 +60,13 @@ jobs:
                 echo "Cannot publish: tag $version does not exist." >&2
                 exit 1
               fi
-              if [[ "$(git rev-list -n 1 "refs/tags/$version")" != "$revision" ]]; then
-                echo "Cannot publish: tag $version does not point to main." >&2
+              tag_revision="$(git rev-list -n 1 "refs/tags/$version")"
+              git fetch origin main
+              if ! git merge-base --is-ancestor "$tag_revision" origin/main; then
+                echo "Cannot publish: tag $version is not reachable from main." >&2
                 exit 1
               fi
+              revision="$tag_revision"
             fi
           fi
 
