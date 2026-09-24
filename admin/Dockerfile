@@ -1,5 +1,5 @@
-# 使用国内代理 Node20 镜像
-FROM docker.m.daocloud.io/library/node:20-alpine AS builder
+# 使用官方 Node 20 镜像，保证 GitHub Actions 可稳定拉取
+FROM node:20-alpine AS builder
 # 设置应用目录
 WORKDIR /app
 # 复制依赖清单
@@ -14,8 +14,8 @@ ARG VITE_PROJECT_API
 ENV VITE_PROJECT_API=$VITE_PROJECT_API
 # 构建静态文件
 RUN npm run build
-# 使用国内代理 Nginx 镜像
-FROM docker.m.daocloud.io/library/nginx:1.27-alpine AS runner
+# 使用官方 Nginx 镜像
+FROM nginx:1.27-alpine AS runner
 ARG VCS_REF=unknown
 LABEL org.opencontainers.image.source="https://github.com/miozen/Miora" \
       org.opencontainers.image.revision="$VCS_REF" \
