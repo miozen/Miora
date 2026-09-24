@@ -51,6 +51,13 @@ feature/<topic> -- PR --> dev -- PR + release tag --> main
 4. `main` 的合并提交通过完整验证后创建 `vX.Y.Z` 标签。只有 `main` 或该版本标签触发生产镜像构建与 GHCR 推送。
 5. 生产/内网服务器的生产 Compose 固定使用该版本镜像标签，执行 `docker compose pull` 后启动；回滚时改回已验证的旧标签。
 
+### 分支创建与紧急修复
+
+- 常规改动必须从最新 `dev` 创建 `feature/<topic>`，并以 PR 合并回 `dev`；不得直接推送 `dev` 或 `main`。
+- 只有通过 `dev` 集成验证的改动才可由 `dev` 发起 PR 到 `main`。`main` 合并后再发布版本标签。
+- 紧急修复从最新 `main` 创建 `hotfix/<topic>`，以 PR 合并到 `main`；修复发布后必须立即创建 `main` 到 `dev` 的回补 PR，避免两个分支分叉。
+- 每个 PR 说明必须包含影响范围、验证结果、回滚方式和关联清单任务；CI 建立后，未通过必需检查的 PR 不得合并。
+
 ## GitHub Actions 触发边界
 
 | 事件 | 验证 | 构建并推送 GHCR | 用途 |

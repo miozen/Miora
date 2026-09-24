@@ -22,7 +22,7 @@
 
 ## B. 分支与质量门禁
 
-- [ ] B.1 建立分支约定：`feature/*` -> `dev` -> `main`，并约定紧急修复分支的回合路径。
+- [x] B.1 建立分支约定：`feature/*` -> `dev` -> `main`，并约定紧急修复分支的回合路径。
 - [ ] B.2 为 PR 到 `dev` 配置 CI：后端 Maven 测试、Admin lint/build、Blog lint/build、Compose 配置校验。
 - [ ] B.3 为 `main` 配置发布前 CI：复跑质量门禁，并生成版本号与 Git tag。
 - [ ] B.4 建立测试/预发布环境变量样例；所有密钥使用 GitHub Secrets，不提交 `.env`。
@@ -105,4 +105,5 @@
 - 2026-09-24，A.2 完成：项目所有者决定以新的 Miora 单体仓库重新初始化历史，不使用 `git subtree` 导入旧提交。原仓库基线已记录：Server `https://github.com/LiuYuYang01/ThriveX-Server.git` @ `60b24e559a9a6ee708b62ecb80d533274a5e0fea`；Admin `https://github.com/LiuYuYang01/ThriveX-Admin.git` @ `b3bac9d730fb840e7f33dc8535ae9820aad2b788`；Blog `https://github.com/LiuYuYang01/ThriveX-Blog.git` @ `d98dacfddabbbaf30a4b6ec37b5183161024dad0`；Docs `https://github.com/LiuYuYang01/ThriveX-Docs.git` @ `e59ada939e2171311cbf6057836d5119db1fc1f1`。验收：使用各仓库 `remote get-url origin`、`rev-parse HEAD` 与最后提交记录核对；无回滚需要。本轮未创建提交、未运行 CI、未推送。
 - 2026-09-24，A.3 完成：已将 `ThriveX-Server`、`ThriveX-Admin`、`ThriveX-Blog`、`ThriveX-Docs` 分别迁移为根目录 `server/`、`admin/`、`blog/`、`docs/`，并按项目所有者授权移除四个嵌套 `.git` 目录；现有未提交的一期改动随目录保留。已将 Compose 构建上下文和 SQL 初始化挂载改为新路径，并同步 Compose 部署文档。由于原工作区根 `.git` 为只读 tmpfs 挂载，已按项目所有者授权创建可写工作区 `/home/mio/projects/miora`，在其中以 `main` 初始化新的单体 Git 仓库；确认不存在嵌套 Git 仓库。验收：`docker compose --env-file .env.example config --quiet` 通过，`git status --branch --short` 显示无提交的 `main`；未创建提交、未推送。
 - 2026-09-24，A.4 完成：新增根 `.gitignore`、`.editorconfig`、`LICENSE`、`CONTRIBUTING.md` 与 `README.md`。根许可证采用 AGPL-3.0，并保留 Admin 的 AGPL 与 Blog 的 GPL-3.0 组件许可证；忽略规则覆盖 `.env`、密钥、Node/Java 构建产物、日志与本地数据。验收：检查 `git status --ignored`、根忽略规则及待提交文件；未创建提交、未推送。
-- 2026-09-24，A.5 进行中：已创建并推送首个单体仓库提交 `04e89d2`（`chore: initialize Miora monorepo`）到 `main`；远端使用固定 SSH-over-443 地址 `ssh://git@ssh.github.com:443/miozen/Miora.git`，并已验证远端 SHA 一致。已检查提交候选、忽略规则和已提交内容的私钥/AWS Access Key 模式；推送前移除了遗漏的 `admin/.vite/` 缓存。阻塞：当前环境未安装/登录 `gh` CLI，且无 GitHub REST API 令牌，无法调用分支保护 API。另需在 B.2 创建并跑通 CI 后，才能将实际检查名称设为必需状态检查；尚未配置保护规则。
+- 2026-09-24，A.5 进行中：已创建并推送首个单体仓库提交 `04e89d2`（`chore: initialize Miora monorepo`）到 `main`；远端使用固定 SSH-over-443 地址 `ssh://git@ssh.github.com:443/miozen/Miora.git`，并已验证远端 SHA 一致。GitHub `main` 已启用分支保护：要求 PR、管理员受规则约束、禁止强推和删除、要求解决对话；目前为单维护者设置 0 个必需批准评审。已检查提交候选、忽略规则和已提交内容的私钥/AWS Access Key 模式；推送前移除了遗漏的 `admin/.vite/` 缓存。剩余依赖：B.2 创建并跑通 CI 后，才能以实际检查名称设置必需状态检查；在此之前 A.5 不标记完成。
+- 2026-09-24，B.1 完成：从 `main` 创建并推送集成分支 `dev`，随后创建 `feature/branch-workflow` 用于承载本轮规范与 A.5 记录的 PR。工作流已明确常规 `feature/* -> dev -> main` 路径，以及 `hotfix/*` 从 `main` 到 `main`、再回补 `dev` 的路径。验收：确认 `dev` 基于 `main` 的提交建立；本轮 PR 指向 `dev`，待 B.2 的 CI 建立后合并。
