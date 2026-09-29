@@ -1,0 +1,10 @@
+{$BLOG_HOST} {
+    @server path /api/* /static/upload/*
+    reverse_proxy @server server:9003
+    reverse_proxy blog:9001
+}
+{$ADMIN_HOST} {
+    @server path /api/* /static/upload/*
+    reverse_proxy @server server:9003
+    reverse_proxy admin:80
+}

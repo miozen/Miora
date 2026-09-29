@@ -1,0 +1,10 @@
+blog.example.com {
+    @server path /api/* /static/upload/*
+    reverse_proxy @server 127.0.0.1:9663
+    reverse_proxy 127.0.0.1:9661
+}
+admin.example.com {
+    @server path /api/* /static/upload/*
+    reverse_proxy @server 127.0.0.1:9663
+    reverse_proxy 127.0.0.1:9662
+}
