@@ -1,114 +1,46 @@
 # Docker Compose 部署
 
-根目录的 `compose.yaml` 会启动 MySQL、后端 Server、Blog、Admin 与 Nginx 入口代理。对外只开放 Nginx 的 HTTP 端口：博客使用 `BLOG_HOST`，控制端使用 `ADMIN_HOST`；两者的 `/api/` 与本地上传文件请求由 Nginx 转发给后端。
+## 生产入口模式
 
-## 环境变量
+`compose.production.yaml` 默认不包含 Miora Nginx/proxy，也不占用 VPS 的 80/443。公网域名、TLS 与访问策略由 1Panel、Nginx、Caddy、Nginx Proxy Manager、Cloudflare Tunnel 或其他网关负责。
 
-复制根目录样例并限制权限：
+| 服务 | 容器端口 | 默认宿主机绑定 | 默认端口 |
+| --- | --- | --- | --- |
+| Blog | 9001 | 127.0.0.1 | 9661 |
+| Admin | 80 | 127.0.0.1 | 9662 |
+| Server API | 9003 | 127.0.0.1 | 9663 |
+| MySQL | 3306 | 不映射 | 无 |
+
+Blog/Admin 继续使用相对 `/api`。每个公网域名均须把 `/api/` 与 `/static/upload/` 转发至 Server；其余路径转发至各自前端。
+
+## 启动
 
 ```bash
 cp .env.example .env
 chmod 600 .env
+# 填写 IMAGE_TAG、数据库密码和 JWT_SECRET_KEY
+docker compose --env-file .env -f compose.production.yaml pull
+docker compose --env-file .env -f compose.production.yaml up -d --remove-orphans
 ```
 
-至少替换 `MYSQL_PASSWORD`、`MYSQL_ROOT_PASSWORD` 与 `JWT_SECRET_KEY`。可用 `openssl rand -hex 32` 生成 JWT 密钥。生产环境还需要将 `BLOG_HOST` 和 `ADMIN_HOST` 分别解析到此服务器，并根据实际监听端口设置 `HTTP_PORT`。
+默认环境变量为 `BLOG_BIND_ADDRESS=127.0.0.1`、`ADMIN_BIND_ADDRESS=127.0.0.1`、`SERVER_BIND_ADDRESS=127.0.0.1`。可按部署拓扑调整 `*_BIND_ADDRESS` 与端口；不建议使用 `0.0.0.0` 将应用端口直接暴露公网。
 
-| 变量                                    | 必填 | 说明                                                                                      |
-| --------------------------------------- | ---- | ----------------------------------------------------------------------------------------- |
-| `COMPOSE_PROJECT_NAME`                  | 建议 | 固定容器、网络和命名卷前缀，升级和恢复时不要随意改动。                                    |
-| `MYSQL_DATABASE`、`MYSQL_USER`          | 是   | 首次初始化时创建的业务数据库与用户。                                                      |
-| `MYSQL_PASSWORD`、`MYSQL_ROOT_PASSWORD` | 是   | 数据库业务用户与 root 密码。                                                              |
-| `JWT_SECRET_KEY`                        | 是   | 后端 JWT 签名密钥；更换后所有已登录会话失效。                                             |
-| `HTTP_PORT`                             | 否   | Nginx 对外 HTTP 端口，默认 `80`。                                                         |
-| `BLOG_HOST`、`ADMIN_HOST`               | 是   | 博客与控制端的域名，Nginx 根据 Host 分流。                                                |
-| `STORAGE_PROVIDER`                      | 否   | 默认 `local`；只有配置完整 S3 参数后才设为 `s3`。                                         |
-| `FILE_PUBLIC_URL`                       | 否   | 同域 Compose 部署留空，文件 URL 为 `/static/upload/...`；后端独立暴露时才填写公开根地址。 |
+## 反向代理
 
-S3 变量仅由后端容器读取。不要把 Access Key 或 Secret Key 放进前端构建变量、数据库或 Git；OCI 与腾讯 COS 的具体填写方式见[对象存储](./API/对象存储)。
+宿主机 Nginx/Caddy 直接代理 `127.0.0.1:9661`、`127.0.0.1:9662`、`127.0.0.1:9663`，示例见 `deploy/reverse-proxy/`。
 
-测试与预发布使用根目录 `environments/test.env.example`、`environments/staging.env.example` 作为非敏感配置样例。数据库密码、JWT 密钥及可选 S3 密钥必须由 GitHub Environment Secrets 或受保护的部署运行时注入；完整变量映射见根目录 `MIORA_ENVIRONMENT_AND_SECRETS.md`。
+1Panel/NPM 等容器化代理不能访问宿主机回环地址。推荐将代理容器加入 `miora-edge` 网络（项目名改变时网络名随之改变），并使用 `blog:9001`、`admin:80`、`server:9003` 作为上游。MySQL 只连接内部 `backend` 网络，不会暴露给宿主机或 edge 网络。若面板无法共享网络，才把 `*_BIND_ADDRESS` 改为经防火墙保护、对代理容器可达的地址。
 
-## 首次启动
+## 可选 standalone
 
-1. 安装 Docker Engine 与 Docker Compose 插件，克隆项目后进入仓库根目录。
-2. 按上一节创建并编辑 `.env`，确认 DNS 已指向服务器；测试环境可使用默认 `localhost` 与 `admin.localhost`。
-3. 构建并后台启动：
-
-   ```bash
-   docker compose up -d --build
-   docker compose ps
-   ```
-
-4. 等待所有服务显示为 `healthy`。首次运行时 MySQL 会在空的 `mysql-data` 命名卷中导入 `server/ThriveX.sql`。
-5. 访问 `https://$BLOG_HOST` 和 `https://$ADMIN_HOST`。本 Compose 只提供 HTTP 入口；生产 HTTPS 应由上游网关、CDN 或扩展的 TLS Nginx 配置终止。
-
-常用排错命令：
+仅新 VPS 没有已有反向代理时，才叠加 Caddy standalone：
 
 ```bash
-docker compose logs -f proxy server
-docker compose ps
+docker compose --env-file .env -f compose.production.yaml -f compose.standalone.yaml up -d
 ```
 
-## 数据持久化
+该模式才会占用 80/443；要求 `BLOG_HOST` 与 `ADMIN_HOST` 已解析到 VPS，并由 Caddy 申请 HTTPS 证书。已有 1Panel/NPM/Caddy 时不要使用。
 
-| 命名卷                                | 内容                 | 说明                                                   |
-| ------------------------------------- | -------------------- | ------------------------------------------------------ |
-| `${COMPOSE_PROJECT_NAME}_mysql-data`  | MySQL 数据目录       | SQL 初始化脚本只会在该卷第一次创建时执行。             |
-| `${COMPOSE_PROJECT_NAME}_upload-data` | `local` 模式上传文件 | 容器重建不会删除该卷；使用 S3 时文件数据在 bucket 中。 |
+## 数据库
 
-不要执行 `docker compose down -v`，除非确认要同时删除数据库和本地上传文件。
-
-## 升级
-
-升级前先完成下一节备份。随后在仓库根目录执行：
-
-```bash
-git pull
-docker compose up -d --build --remove-orphans
-docker compose ps
-```
-
-该命令会重建变更的服务，但保留两个命名卷。升级后检查 `server`、`blog`、`admin` 与 `proxy` 的健康状态，再访问博客、控制端和上传文件。若升级涉及数据库结构变更，必须先阅读该版本的迁移说明；本一期不提供自动数据库迁移。
-
-## 生产镜像部署
-
-生产环境使用根目录 `compose.production.yaml`，它只引用 GHCR 的版本镜像，不包含 `build`、源码目录或 Nginx 配置挂载。部署前必须由受保护的运行时注入数据库、JWT 与可选 S3 密钥，并设置明确的 `IMAGE_TAG=vX.Y.Z`；禁止使用 `latest`。
-
-```bash
-docker compose -f compose.production.yaml pull
-docker compose -f compose.production.yaml up -d --remove-orphans
-docker compose -f compose.production.yaml ps
-```
-
-生产 MySQL 卷不会从仓库 SQL 文件初始化。首次部署前必须通过经过审查的数据库初始化/迁移流程准备数据库；不要把源码树或 `server/ThriveX.sql` 挂载到生产服务器。镜像命名与标签规则见根目录 `MIORA_GHCR_IMAGE_CONVENTION.md`。公开镜像的首次发布、无源码服务器部署、升级和回滚步骤见 [GHCR 生产镜像部署](./GHCR生产镜像)。
-
-## 备份
-
-在宿主机创建受保护的备份目录后，导出数据库和本地上传文件：
-
-```bash
-mkdir -p backups
-docker compose exec -T mysql sh -c 'exec mysqldump --single-transaction -u root -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"' > backups/thrivex-$(date +%F).sql
-docker compose exec -T server tar -C /app/upload -czf - . > backups/upload-$(date +%F).tar.gz
-```
-
-将两个备份文件复制到独立于此服务器的安全位置。S3 模式不使用 `upload-data` 保存业务文件，应按云厂商策略对 bucket 或对象版本进行备份。
-
-## 恢复
-
-恢复会覆盖数据。先停止除数据库外的应用，并确认当前数据已经另行备份：
-
-```bash
-docker compose stop proxy blog admin server
-docker compose exec -T mysql sh -c 'exec mysql -u root -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"' < backups/thrivex-YYYY-MM-DD.sql
-```
-
-如需恢复本地上传文件，将上传压缩包解压到 `/app/upload`：
-
-```bash
-docker compose start server
-docker compose exec -T server tar -xzf - -C /app/upload < backups/upload-YYYY-MM-DD.tar.gz
-docker compose up -d
-```
-
-该文件恢复会覆盖同名文件但不会自动清除压缩包中不存在的旧文件；需要精确回滚时，应先在停机状态下清空 `upload-data` 卷内容，并确认备份完整后再解压。数据库与文件恢复完成后，检查容器健康状态并验证文章、图片和控制端登录。
+生产 Compose 不会导入 `server/ThriveX.sql`。Miora 数据库初始化/迁移属于独立后续阶段；空数据库尚不可作为正式上线状态。

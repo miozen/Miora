@@ -1,0 +1,17 @@
+# TLS is owned by your gateway/panel.
+server {
+    listen 80;
+    server_name blog.example.com;
+    client_max_body_size 100m;
+    location /api/ { proxy_pass http://127.0.0.1:9663; include proxy_params; }
+    location /static/upload/ { proxy_pass http://127.0.0.1:9663; include proxy_params; }
+    location / { proxy_pass http://127.0.0.1:9661; include proxy_params; }
+}
+server {
+    listen 80;
+    server_name admin.example.com;
+    client_max_body_size 100m;
+    location /api/ { proxy_pass http://127.0.0.1:9663; include proxy_params; }
+    location /static/upload/ { proxy_pass http://127.0.0.1:9663; include proxy_params; }
+    location / { proxy_pass http://127.0.0.1:9662; include proxy_params; }
+}

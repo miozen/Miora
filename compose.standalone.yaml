@@ -1,0 +1,23 @@
+services:
+  gateway:
+    image: caddy:2.8-alpine
+    restart: unless-stopped
+    depends_on:
+      blog: { condition: service_healthy }
+      admin: { condition: service_healthy }
+      server: { condition: service_healthy }
+    environment:
+      BLOG_HOST: ${BLOG_HOST:?set BLOG_HOST for standalone HTTPS}
+      ADMIN_HOST: ${ADMIN_HOST:?set ADMIN_HOST for standalone HTTPS}
+    ports:
+      - "${STANDALONE_HTTP_PORT:-80}:80"
+      - "${STANDALONE_HTTPS_PORT:-443}:443"
+    volumes:
+      - ./deploy/caddy/Caddyfile.standalone:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks: [edge]
+
+volumes:
+  caddy-data:
+  caddy-config:
