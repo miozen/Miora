@@ -3,13 +3,12 @@ services:
     image: mysql:8.0
     restart: unless-stopped
     environment:
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-thrivex}
-      MYSQL_USER: ${MYSQL_USER:-thrivex}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-miora}
+      MYSQL_USER: ${MYSQL_USER:-miora}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:?set MYSQL_PASSWORD in .env}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD in .env}
     volumes:
       - mysql-data:/var/lib/mysql
-      - ./server/ThriveX.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
       interval: 10s
@@ -25,10 +24,12 @@ services:
         condition: service_healthy
     environment:
       PORT: 9003
-      DB_INFO: mysql:3306/${MYSQL_DATABASE:-thrivex}
-      DB_USERNAME: ${MYSQL_USER:-thrivex}
+      DB_INFO: mysql:3306/${MYSQL_DATABASE:-miora}
+      DB_USERNAME: ${MYSQL_USER:-miora}
       DB_PASSWORD: ${MYSQL_PASSWORD}
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:?set JWT_SECRET_KEY in .env}
+      BOOTSTRAP_ADMIN_USERNAME: ${BOOTSTRAP_ADMIN_USERNAME:-}
+      BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:-}
       FILE_DIR: /app/upload
       FILE_PUBLIC_URL: ${FILE_PUBLIC_URL:-}
       STORAGE_PROVIDER: ${STORAGE_PROVIDER:-local}

@@ -59,6 +59,11 @@
             <artifactId>spring-boot-devtools</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+
         <!-- 用于支持MySQL数据库的连接 -->
         <dependency>
             <groupId>mysql</groupId>
