@@ -117,7 +117,7 @@ jobs:
         with:
           context: ${{ matrix.context }}
           file: ${{ matrix.dockerfile }}
-          platforms: linux/amd64
+          platforms: linux/amd64,linux/arm64
           push: ${{ needs.validate.outputs.publish == 'true' }}
           tags: |
             ghcr.io/miozen/${{ matrix.image }}:${{ needs.validate.outputs.version }}
