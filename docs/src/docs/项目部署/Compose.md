@@ -44,3 +44,11 @@ docker compose --env-file .env -f compose.production.yaml -f compose.standalone.
 ## 数据库
 
 生产 Compose 不会导入 `server/ThriveX.sql`。Miora 数据库初始化/迁移属于独立后续阶段；空数据库尚不可作为正式上线状态。
+
+## 数据库初始化
+
+Miora 使用 Flyway 自动执行版本化迁移。空数据库启动时会创建 22 张业务表和中性基础配置；不会导入 ThriveX 内容、用户、历史 Token 或默认密码。
+
+首次部署必须在受保护的 .env 中设置 BOOTSTRAP_ADMIN_USERNAME 与至少 12 位的 BOOTSTRAP_ADMIN_PASSWORD。Server 仅在 user 表为空时创建该管理员；密码不会写入迁移文件。首次登录后应立即在初始化向导修改凭据并从部署环境删除 BOOTSTRAP_ADMIN_PASSWORD。
+
+旧 ThriveX 数据库不提供自动迁移。上线 Miora 应使用空数据库，旧数据库请先独立备份。
