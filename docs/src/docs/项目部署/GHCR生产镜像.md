@@ -19,3 +19,11 @@ docker compose --env-file .env -f compose.production.yaml up -d --remove-orphans
 仅没有既有网关的全新 VPS 使用 `compose.standalone.yaml`；它会由 Caddy 占用 80/443 并要求真实域名。不要使用 `latest`、不要裸露高位端口、不要执行 `down -v`。
 
 生产数据库不会自动导入旧 SQL；初始化/迁移另行实施。
+
+## 数据库初始化
+
+Miora 使用 Flyway 自动执行版本化迁移。空数据库启动时会创建 22 张业务表和中性基础配置；不会导入 ThriveX 内容、用户、历史 Token 或默认密码。
+
+首次部署必须在受保护的 .env 中设置 BOOTSTRAP_ADMIN_USERNAME 与至少 12 位的 BOOTSTRAP_ADMIN_PASSWORD。Server 仅在 user 表为空时创建该管理员；密码不会写入迁移文件。首次登录后应立即在初始化向导修改凭据并从部署环境删除 BOOTSTRAP_ADMIN_PASSWORD。
+
+旧 ThriveX 数据库不提供自动迁移。上线 Miora 应使用空数据库，旧数据库请先独立备份。
