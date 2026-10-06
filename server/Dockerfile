@@ -13,7 +13,7 @@ COPY . .
 # 打包后端服务
 RUN mvn clean package -DskipTests
 # 使用官方 Java 8 运行时镜像
-FROM eclipse-temurin:8-jre-alpine AS runner
+FROM eclipse-temurin:8-jre-jammy AS runner
 ARG VCS_REF=unknown
 LABEL org.opencontainers.image.source="https://github.com/miozen/Miora" \
       org.opencontainers.image.revision="$VCS_REF" \
