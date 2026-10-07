@@ -24,6 +24,7 @@ public class WebConfig implements WebMvcConfigurer {
 
     private static final Set<String> EXCLUDED_PATHS = new HashSet<>(Arrays.asList(
             "/",
+            "/health",
             "/doc.html",
             "/swagger-resources",
             "/webjars",

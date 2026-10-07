@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Properties;
 
 @Configuration
+@org.springframework.context.annotation.DependsOn("mioraFlywayMigration")
 public class MailConfig {
     @Resource
     private EnvConfigService envConfigService;
