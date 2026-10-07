@@ -10,6 +10,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 
 import javax.annotation.Resource;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
 
@@ -21,7 +22,22 @@ public class MailConfig {
 
     private Map<String, Object> getEmailConfig() {
         EnvConfig envConfig = envConfigService.getByName("email");
+        if (envConfig == null || envConfig.getValue() == null) {
+            return Collections.emptyMap();
+        }
         return envConfig.getValue();
+    }
+
+    private boolean isEmailConfigured(Map<String, Object> config) {
+        try {
+            requireString(config, "host");
+            requireInt(config, "port");
+            requireString(config, "username");
+            requireString(config, "password");
+            return true;
+        } catch (RuntimeException ignored) {
+            return false;
+        }
     }
 
     private String requireString(Map<String, Object> config, String key) {
@@ -157,9 +173,13 @@ public class MailConfig {
     @Bean
     @Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE) // 每次使用时重新创建
     public JavaMailSender javaMailSender() {
+        Map<String, Object> config = getEmailConfig();
+        if (!isEmailConfigured(config)) {
+            System.err.println("邮件服务尚未配置；应用将继续启动，待后台配置完成后再启用邮件发送。");
+            return new JavaMailSenderImpl();
+        }
+
         try {
-            Map<String, Object> config = getEmailConfig();
-            
             String host = requireString(config, "host");
             Integer port = requireInt(config, "port");
             String username = requireString(config, "username");
