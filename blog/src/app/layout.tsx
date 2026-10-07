@@ -21,10 +21,26 @@ const LXGWWenKai = localFont({
   display: 'swap',
 });
 
+const DEFAULT_SITE_URL = 'http://localhost:9001';
+
+function resolveSiteUrl(value?: string): string {
+  const configuredUrl = value?.trim();
+  if (!configuredUrl) {
+    return DEFAULT_SITE_URL;
+  }
+
+  try {
+    return new URL(configuredUrl).toString();
+  } catch {
+    return DEFAULT_SITE_URL;
+  }
+}
+
 // 生成动态metadata
 export async function generateMetadata(): Promise<Metadata> {
   await connection();
   const data = await getWebConfigCacheAPI();
+  const siteUrl = resolveSiteUrl(data?.url);
 
   return {
     title: {
@@ -41,14 +57,14 @@ export async function generateMetadata(): Promise<Metadata> {
       address: false,
       telephone: false,
     },
-    metadataBase: new URL(data?.url ?? 'https://liuyuyang.net'),
+    metadataBase: new URL(siteUrl),
     alternates: {
       canonical: '/',
     },
     openGraph: {
       type: 'website',
       locale: 'zh_CN',
-      url: data?.url ?? 'https://liuyuyang.net',
+      url: siteUrl,
       title: `${data?.title ?? 'ThriveX'} - ${data?.subhead ?? '现代化博客管理系统'}`,
       description: data?.description ?? 'ThriveX 现代化博客管理系统',
       siteName: data?.title ?? 'ThriveX',
