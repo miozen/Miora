@@ -63,6 +63,11 @@
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-mysql</artifactId>
+            <version>8.5.13</version>
+        </dependency>
 
         <!-- 用于支持MySQL数据库的连接 -->
         <dependency>
