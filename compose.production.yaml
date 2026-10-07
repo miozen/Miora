@@ -43,7 +43,7 @@ services:
     volumes: [upload-data:/app/upload]
     ports: ["${SERVER_BIND_ADDRESS:-127.0.0.1}:${SERVER_PORT:-9663}:9003"]
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:9003/ || exit 1"]
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:9003/health || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 8
